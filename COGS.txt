@@ -1,0 +1,11 @@
+modules.character.character
+modules.character.prefix
+modules.character.util
+modules.character.whitelist
+modules.character.proxy
+modules.character.logclean
+modules.character.listeners
+modules.errorhandler
+modules.remind
+modules.utilities
+jishaku
