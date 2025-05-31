@@ -15,6 +15,6 @@ class CharacterInfo:
         for i in data["classes"]:
             tmp.append(dataclasses.asdict(Class.create_class(i)))
         self.classes = json.dumps(tmp)
-        if data["decorations"]["avatarUrl"] is None:
-            self.image = "https://www.dndbeyond.com/Content/Skins/Waterdeep/images/characters/default-avatar-builder.png"
-        self.image = data["decorations"]["avatarUrl"].split("?")[0]
+        self.image = "https://www.dndbeyond.com/Content/Skins/Waterdeep/images/characters/default-avatar-builder.png"
+        if data["decorations"]["avatarUrl"]:
+            self.image = data["decorations"]["avatarUrl"].split("?")[0]

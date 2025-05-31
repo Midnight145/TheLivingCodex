@@ -1,4 +1,5 @@
 import asyncio
+import re
 
 import discord
 from discord.ext import commands
@@ -133,8 +134,7 @@ class Listeners(commands.Cog):
 
         if message.reference is not None:
             message_reference = await message.channel.fetch_message(message.reference.message_id)
-            jump_url = message_reference.jump_url
-            kwargs["content"] += f"\n\n[Replied message]({jump_url})"
+            kwargs["embed"] = await create_reply_embed(message_reference)
         if isinstance(message.channel, discord.Thread):
             kwargs["thread"] = message.channel
         await message.delete()
@@ -145,6 +145,51 @@ class Listeners(commands.Cog):
         await msg.add_reaction("📋")
         print("Adding message " + str(msg.id) + " to cache")
         LogCleanup.cache[message.id] = message.author.id
+
+
+URL_REGEX = r'https?://\S+'  # Adjust regex as needed
+
+
+async def create_reply_embed(message: discord.Message):
+    jump_link = message.jump_url
+    content = ""
+
+    if message.content.strip():
+        msg = message.content
+        if len(msg) > 100:
+            msg = msg[:100]
+
+            if re.search(r'<[at]?[@#:][!&]?(\w+:)?(\d+)?(:[tTdDfFR])?$', msg):
+                mention_tail = message.content[100:].split(">")[0]
+                if message.content.startswith(msg + mention_tail + ">"):
+                    msg += mention_tail + ">"
+
+            if re.search(URL_REGEX, msg):
+                msg += message.content[100:].split(" ")[0]
+                if len(msg) > 300:
+                    msg = re.sub(URL_REGEX, f"*[(very long link removed, click to see original message)]({jump_link})*",
+                                 msg)
+                msg += " "
+
+            if re.findall(r'\|\|', msg) and re.findall(r'\|\|', message.content):
+                if len(re.findall(r'\|\|', msg)) % 2 == 1 and len(re.findall(r'\|\|', message.content)) % 2 == 0:
+                    msg += "||"
+            if msg != message.content:
+                msg += "…"
+
+        content += f"**[Reply to:]({jump_link})** {msg}"
+        if message.attachments or message.embeds:
+            content += " 📎"
+    else:
+        content += f"*[(click to see attachment)]({jump_link})*"
+
+    username = message.author.display_name
+    avatar_url = message.author.display_avatar.url
+
+    embed = discord.Embed(description=content, color=discord.Color.blue())
+    embed.set_author(name=f"{username} ↩", icon_url=avatar_url)
+
+    return embed
 
 
 async def setup(bot):

@@ -96,10 +96,10 @@ class Util(commands.Cog):
 
         embed.add_field(name="Class(es)", value=class_str, inline=False)
 
-        if len(character["backstory"]) > 1024:
-            embed.add_field(name="Backstory", value=character["backstory"][:1021] + "...", inline=False)
-        else:
-            embed.add_field(name="Backstory", value=character["backstory"], inline=False)
+        # if len(character["backstory"]) > 1024:
+        #     embed.add_field(name="Backstory", value=character["backstory"][:1021] + "...", inline=False)
+        # else:
+        #     embed.add_field(name="Backstory", value=character["backstory"], inline=False)
         embed.set_image(url=character["image"])
         return embed
 

@@ -1,4 +1,5 @@
 import datetime
+import re
 
 import aiohttp
 import discord
@@ -26,8 +27,10 @@ class Character(commands.Cog):
 
     @commands.command(aliases=['import'])
     async def import_character(self, context: commands.Context, ddb_link: str):
-        char_id = ddb_link.split("/")[-1]
-        link = self.api + char_id
+        char_id = self.fetch_cid_from_link(ddb_link)
+        if char_id == -1:
+            return await context.send("Invalid link!")
+        link = self.api + str(char_id)
         async with aiohttp.ClientSession() as session:
             async with session.get(link) as resp:
                 if resp.status == 403:
@@ -58,8 +61,11 @@ class Character(commands.Cog):
         if not await self.check_character(context, cid):
             return
         ddb_link = self.bot.db.execute("SELECT link FROM characters WHERE id = ?", (cid,)).fetchone()[0]
-        link = ddb_link.split("/")[-1]
-        link = self.api + link
+        char_id = self.fetch_cid_from_link(ddb_link)
+
+        if char_id == -1:
+            return await context.send("Invalid link!")
+        link = self.api + str(char_id)
         async with aiohttp.ClientSession() as session:
             async with session.get(link) as resp:
                 if resp.status != 200:
@@ -68,7 +74,7 @@ class Character(commands.Cog):
         character = CharacterInfo(data)
         self.bot.db.execute(
             "UPDATE characters SET (name, owner, backstory, race, classes, image, link) = (?, ?, ?, ?, ?, ?, ?) WHERE id = ?",
-            (character.name, context.author.id, character.backstory, character.race, character.classes, character.image, ddb_link), cid)
+            (character.name, context.author.id, character.backstory, character.race, character.classes, character.image, ddb_link, cid))
         self.bot.connection.commit()
         await context.send(f"Character {character.name} successfully updated!")
 
@@ -131,6 +137,15 @@ class Character(commands.Cog):
             await context.send("You do not own this character!")
             return False
         return True
+
+    @staticmethod
+    def fetch_cid_from_link(link: str) -> int:
+        regex = r"^(https?:\/\/)?www\.dndbeyond\.com\/characters\/(?P<id>\d+).*"
+        char_id = re.match(regex, link)
+        if char_id is None:
+            return -1
+        else:
+            return int(char_id.group("id"))
 
 async def setup(bot):
     await bot.add_cog(Character(bot))
