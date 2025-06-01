@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
 
+from modules.character import CharacterInfo
+
 
 class Util(commands.Cog):
     help_str = """
@@ -47,12 +49,12 @@ class Util(commands.Cog):
 
         return webhook
 
-    def fetch_char_info(self, content, author) -> tuple[dict, str]:
+    def fetch_char_info(self, content, author) -> tuple[CharacterInfo, str]:
         prefixes = self.bot.db.execute("SELECT * FROM prefixes WHERE owner = ?", (author,)).fetchall()
         found_prefixes = sorted([i for i in prefixes if content.startswith(i["prefix"])],
                                 key = lambda x: len(x["prefix"]), reverse=True)
         found_prefix = found_prefixes[0] if found_prefixes else None
-        char = self.bot.db.execute("SELECT * FROM characters WHERE id = ?", (found_prefix["cid"],)).fetchone()
+        char = CharacterInfo.fetch_character(found_prefix["cid"]) if found_prefix else None
 
         return char, found_prefix["prefix"]
 

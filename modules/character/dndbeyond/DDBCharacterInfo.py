@@ -1,12 +1,13 @@
 import dataclasses
 import json
 import sqlite3
+from typing import override
 
 import discord
 import datetime
 
-from modules.character.dndbeyond import DDBClass
-from modules.character import CharacterInfo
+from modules.character.dndbeyond.DDBClass import DDBClass
+from modules.character import CharacterInfo, Class
 
 
 class DDBCharacterInfo(CharacterInfo):
@@ -27,10 +28,9 @@ class DDBCharacterInfo(CharacterInfo):
         if data["decorations"]["avatarUrl"]:
             self.image = data["decorations"]["avatarUrl"].split("?")[0]
 
-    def __blank_ctor(self):
-        pass
 
-    def generate_character_embed(self):
+    @override
+    def generate_embed(self):
         embed = discord.Embed(
             title=f"Info for {self.name}",
             color=discord.Color.gold(),
@@ -57,24 +57,25 @@ class DDBCharacterInfo(CharacterInfo):
         return embed
 
     @staticmethod
+    @override
     def from_row(data: sqlite3.Row) -> 'DDBCharacterInfo':
         """
         Create a DDBCharacterInfo instance from a dictionary pulled from the database.
         :param data: The data from the database
         :return: The created DDBCharacterInfo instance
         """
+
         ret = DDBCharacterInfo()
-        ret.id = data["id"]
-        ret.name = data["name"]
-        ret.race = data["race"]
-        ret.classes = data["classes"]
-        ret.image = data["image"]
-        ret.backstory = data["backstory"]
-        ret.owner = data["owner"]
-        ret.link = data["link"]
-        if data["subclass"] is not None:
-            ret.subclass = data["subclass"]
-        if data["subclass_url"] is not None:
-            ret.subclass_url = data["subclass_url"]
+        CharacterInfo._populate_obj(ret, data)
+        ret.classes = []
+        classes = json.loads(data["classes"])
+        for i in classes:
+            ret.classes.append(DDBClass(
+                level=i["level"],
+                name=i["name"],
+                url=DDBCharacterInfo.base_link + i["url"],
+                subclass=i["subclass"],
+                subclass_url=DDBCharacterInfo.base_link + i["subclass_url"]
+            ))
             
         return ret

@@ -28,7 +28,7 @@ class Listeners(commands.Cog):
         else:
             channel = message.channel
 
-        char = Proxy.instance.handle_proxied_message(message)
+        char: CharacterInfo = Proxy.instance.handle_proxied_message(message)
         if char is None:
             char, found_prefix = Util.instance.fetch_char_info(message.content, message.author.id)
             if char is None or found_prefix is None:

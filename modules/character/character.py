@@ -1,19 +1,40 @@
 import datetime
-import re
-
-import aiohttp
-import discord
-from discord.ext import commands
 from math import ceil
 
+import discord
+from discord.ext import commands
+
 from modules.character import CharacterInfo
-from modules.character.dndbeyond import DDBCharacterInfo
+from modules.character.dndbeyond import DDBImporter
+from modules.character.pathbuilder import PBImporter
 from modules.character.util import Util
 from modules.character.whitelist import Whitelist
 
 
-# noinspection DuplicatedCode
-class Character(commands.Cog):
+# noinspection PyUnusedLocal
+async def update_err(context: commands.Context, cid: int):
+    await context.send("Unsupported update method! Automatic updates are only available for D&D Beyond and PathBuilder characters.")
+
+# noinspection PyUnusedLocal
+async def import_err(context: commands.Context, link: str):
+    await context.send("Unsupported import method! Please use a valid D&D Beyond or PathBuilder link.")
+
+
+
+class CharacterModule(commands.Cog):
+
+    importers = {
+        "ddb": DDBImporter.import_character,
+        "pb": PBImporter.import_character,
+        "_": update_err
+    }
+
+    updaters = {
+        "ddb": DDBImporter.update_character,
+        "pb": PBImporter.update_character,
+        "_": update_err
+    }
+
     def __init__(self, bot):
         self.bot = bot
         self.bot.db.execute(
@@ -23,27 +44,16 @@ class Character(commands.Cog):
         self.bot.db.execute("CREATE TABLE IF NOT EXISTS proxies (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, cid INTEGER, channel INTEGER, thread INTEGER)")
         self.bot.db.execute("CREATE TABLE IF NOT EXISTS channels (id INTEGER, whitelisted BOOLEAN, cooldown INTEGER, type TEXT)")
         self.bot.connection.commit()
-        self.ddb_api = "https://character-service.dndbeyond.com/character/v5/character/"
 
 
     @commands.command(aliases=['import'])
-    async def import_character(self, context: commands.Context, ddb_link: str):
-        char_id = self.fetch_cid_from_link(ddb_link)
-        if char_id == -1:
-            return await context.send("Invalid link!")
-        link = self.ddb_api + str(char_id)
-        async with aiohttp.ClientSession() as session:
-            async with session.get(link) as resp:
-                if resp.status == 403:
-                    return await context.send(
-                        f"Failed to fetch character data! Make sure your character is set to public [here](https://www.dndbeyond.com/characters/{char_id}/builder/home/basic)")
-                if resp.status != 200:
-                    return await context.send("Failed to fetch character data!")
-                data = (await resp.json())["data"]
-        character = DDBCharacterInfo(data)
-
+    async def import_character(self, context: commands.Context, link: str):
+        type_ = self.fetch_import_method(link)
+        character = await self.importers.get(type_, self.importers["_"])(context, link)
+        if character is None:
+            return
         self.bot.db.execute("INSERT INTO characters (name, owner, backstory, race, classes, image, link, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                            (character.name, context.author.id, character.backstory, character.race, character.classes, character.image, ddb_link, "ddb"))
+                            (character.name, context.author.id, character.backstory, character.race, character.classes, character.image, link, type_))
         self.bot.connection.commit()
         cid = self.bot.db.lastrowid
         embed = discord.Embed(
@@ -61,23 +71,16 @@ class Character(commands.Cog):
     async def update_character(self, context: commands.Context, cid: int):
         if not await self.check_character(context, cid):
             return
-        ddb_link = self.bot.db.execute("SELECT link FROM characters WHERE id = ?", (cid,)).fetchone()[0]
-        char_id = self.fetch_cid_from_link(ddb_link)
 
-        if char_id == -1:
-            return await context.send("Invalid link!")
-        link = self.ddb_api + str(char_id)
-        async with aiohttp.ClientSession() as session:
-            async with session.get(link) as resp:
-                if resp.status != 200:
-                    return await context.send("Failed to fetch character data!")
-                data = (await resp.json())["data"]
-        character = DDBCharacterInfo(data)
+        character = CharacterInfo.fetch_character(cid)
+        updated = await self.updaters.get(character.type, self.updaters["_"])(context, character.link)
+        if updated is None:
+            return
         self.bot.db.execute(
             "UPDATE characters SET (name, owner, backstory, race, classes, image, link) = (?, ?, ?, ?, ?, ?, ?) WHERE id = ?",
-            (character.name, context.author.id, character.backstory, character.race, character.classes, character.image, ddb_link, cid))
+            (updated.name, context.author.id, updated.backstory, updated.race, updated.classes, updated.image, character.link, cid))
         self.bot.connection.commit()
-        await context.send(f"Character {character.name} successfully updated!")
+        await context.send(f"Character {updated.name} successfully updated!")
 
     @commands.command(aliases=["delete"])
     async def delete_character(self, context: commands.Context, cid: int):
@@ -125,7 +128,8 @@ class Character(commands.Cog):
     @commands.command()
     async def help(self, context: commands.Context):
         if context.guild and context.author.guild_permissions.manage_channels:
-            await context.send(Util.help_str + "" + Whitelist.whitelist_help)
+            await context.send(Util.help_str)
+            await context.send(Whitelist.whitelist_help)
         else:
             await context.send(Util.help_str)
 
@@ -140,13 +144,13 @@ class Character(commands.Cog):
         return True
 
     @staticmethod
-    def fetch_cid_from_link(link: str) -> int:
-        regex = r"^(https?:\/\/)?www\.dndbeyond\.com\/characters\/(?P<id>\d+).*"
-        char_id = re.match(regex, link)
-        if char_id is None:
-            return -1
-        else:
-            return int(char_id.group("id"))
+    def fetch_import_method(link: str) -> str:
+        if "dndbeyond.com" in link:
+            return "ddb"
+        if "pathbuilder2e.com" in link:
+            return "pb"
+        return "_"
+
 
 async def setup(bot):
-    await bot.add_cog(Character(bot))
+    await bot.add_cog(CharacterModule(bot))
