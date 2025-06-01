@@ -2,7 +2,7 @@ import dataclasses
 
 import discord
 
-from CharBot import CharBot
+from LivingCodex import LivingCodex
 from modules.character.dndbeyond.DDBCharacterInfo import DDBCharacterInfo
 
 @dataclasses.dataclass
@@ -21,7 +21,7 @@ class CharacterInfo:
     @staticmethod
     def fetch_character(cid: int) -> 'CharacterInfo':
         """Fetch character information from the database."""
-        resp = CharBot.instance.db.execute("SELECT * FROM characters WHERE id = ?", (cid,)).fetchone()
+        resp = LivingCodex.instance.db.execute("SELECT * FROM characters WHERE id = ?", (cid,)).fetchone()
         type_ = resp["type"]
         match type_:
             case "ddb":

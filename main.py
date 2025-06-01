@@ -4,7 +4,7 @@ import traceback
 
 import discord
 
-from CharBot import CharBot
+from LivingCodex import LivingCodex
 from modules.errorhandler import TracebackHandler
 
 
@@ -35,8 +35,8 @@ db.execute("CREATE TABLE IF NOT EXISTS config (server_id INTEGER PRIMARY KEY, st
 
 intents = discord.Intents.all()
 
-bot = CharBot(db, connection, command_prefix=get_prefix, intents=intents, help_command=None)
-CharBot.instance = bot
+bot = LivingCodex(db, connection, command_prefix=get_prefix, intents=intents, help_command=None)
+LivingCodex.instance = bot
 
 
 @bot.event

@@ -3,8 +3,8 @@ import sqlite3
 from discord.ext import commands
 
 
-class CharBot(commands.Bot):
-    instance: 'CharBot' = None
+class LivingCodex(commands.Bot):
+    instance: 'LivingCodex' = None
 
     def __init__(self, db: sqlite3.Cursor, connection: sqlite3.Connection, **kwargs):
         super().__init__(**kwargs)
