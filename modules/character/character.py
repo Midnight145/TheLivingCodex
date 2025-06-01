@@ -6,8 +6,8 @@ import discord
 from discord.ext import commands
 from math import ceil
 
-from modules.character.dndbeyond.CharacterInfo import CharacterInfo
-from modules.character.dndbeyond.DDBCharacterInfo import DDBCharacterInfo
+from modules.character import CharacterInfo
+from modules.character.dndbeyond import DDBCharacterInfo
 from modules.character.dndbeyond.util import Util
 from modules.character.whitelist import Whitelist
 

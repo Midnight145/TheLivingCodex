@@ -3,10 +3,10 @@ import dataclasses
 import discord
 
 from LivingCodex import LivingCodex
-from modules.character.dndbeyond.DDBCharacterInfo import DDBCharacterInfo
 
 @dataclasses.dataclass
 class CharacterInfo:
+
     id: int
     name: str
     race: str
@@ -21,6 +21,7 @@ class CharacterInfo:
     @staticmethod
     def fetch_character(cid: int) -> 'CharacterInfo':
         """Fetch character information from the database."""
+        from modules.character.dndbeyond import DDBCharacterInfo
         resp = LivingCodex.instance.db.execute("SELECT * FROM characters WHERE id = ?", (cid,)).fetchone()
         type_ = resp["type"]
         match type_:

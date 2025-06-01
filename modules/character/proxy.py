@@ -3,7 +3,7 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from modules.character.dndbeyond.CharacterInfo import CharacterInfo
+from modules.character import CharacterInfo
 from modules.character.dndbeyond.util import Util
 
 

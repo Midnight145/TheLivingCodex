@@ -6,7 +6,7 @@ import discord
 import datetime
 
 from modules.character.dndbeyond import DDBClass
-from modules.character.dndbeyond.CharacterInfo import CharacterInfo
+from modules.character import CharacterInfo
 
 
 class DDBCharacterInfo(CharacterInfo):
@@ -21,7 +21,7 @@ class DDBCharacterInfo(CharacterInfo):
         self.classes = []
         tmp = []
         for i in data["classes"]:
-            tmp.append(dataclasses.asdict(DDBClass.DDBClass.create_class(i)))
+            tmp.append(dataclasses.asdict(DDBClass.create_class(i)))
         self.classes = json.dumps(tmp)
         self.image = "https://www.dndbeyond.com/Content/Skins/Waterdeep/images/characters/default-avatar-builder.png"
         if data["decorations"]["avatarUrl"]:

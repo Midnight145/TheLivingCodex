@@ -1,7 +1,6 @@
 import dataclasses
-import json
 
-from modules.character.dndbeyond.Class import Class
+from modules.character import Class
 
 
 @dataclasses.dataclass
