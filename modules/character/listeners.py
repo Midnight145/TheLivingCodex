@@ -4,6 +4,7 @@ import re
 import discord
 from discord.ext import commands
 
+from modules.character.dndbeyond.CharacterInfo import CharacterInfo
 from modules.character.proxy import Proxy
 from modules.character.dndbeyond.util import Util
 from modules.character.whitelist import Whitelist
@@ -41,11 +42,11 @@ class Listeners(commands.Cog):
         if self.bot.db.execute("SELECT whitelist_enabled FROM config WHERE server_id = ?", (message.guild.id,)).fetchone()[0] != 0:
             if cooldown := Whitelist.instance.get_channel_cooldown(channel.id, channel.category_id) is None:
                 return  # channel is blacklisted
-            if Whitelist.instance.get_character_cooldown(char["id"], message.channel):
+            if Whitelist.instance.get_character_cooldown(char.id, message.channel):
                 await message.delete()
                 await message.channel.send(f"This character is on cooldown! Please wait {cooldown} seconds")
 
-            await Whitelist.instance.set_cooldown(cooldown, message.channel, char["id"])
+            await Whitelist.instance.set_cooldown(cooldown, message.channel, char.id)
 
         webhook = await Util.instance.create_webhook(channel)
         await self.send_message(webhook, message, char, full_message)
@@ -82,18 +83,22 @@ class Listeners(commands.Cog):
         if message.webhook_id != webhook.id:
             return
 
-        character = self.bot.db.execute("SELECT * FROM characters WHERE name = ?",
-                                        (message.author.display_name,)).fetchone()
+        # todo: if two characters owned by the same user have the same name, this will grab the first entry instead of the one that matches the message
+        # todo: i need to keep a log of messages that are sent by characters and then check that instead of just trying to grab the character by name
+        character = self.bot.db.execute("SELECT * FROM characters WHERE name = ? AND owner = ?",
+                                        (message.author.display_name, payload.user_id)).fetchone()
+        
         if character is None:
             return
+        character = CharacterInfo.from_dict(character)
         if payload.emoji.name == "✖":
-            if not payload.user_id == character["owner"]:
+            if not payload.user_id == character.owner:
                 await message.remove_reaction(payload.emoji, payload.member)
                 return
             await message.delete()
             return
         elif payload.emoji.name == "📝":
-            if not payload.user_id == character["owner"]:
+            if not payload.user_id == character.owner:
                 await message.remove_reaction(payload.emoji, payload.member)
                 return
             to_delete = await message.channel.send("Enter new message content:")
@@ -113,7 +118,7 @@ class Listeners(commands.Cog):
             member = self.bot.get_user(payload.user_id)
             await message.remove_reaction(payload.emoji, member)
             # todo: add in db what type of character this is
-            embed = Util.generate_character_embed(character)
+            embed = character.generate_embed()
             await member.send(embed=embed)
             await message.remove_reaction(payload.emoji, payload.member)
 
@@ -123,11 +128,13 @@ class Listeners(commands.Cog):
 
             await message.remove_reaction(payload.emoji, payload.member)
 
+    # linter thinks kwargs["embed"], thread are type errors because kwargs definition only has str,bool
+    # noinspection PyTypeChecker
     @staticmethod
-    async def send_message(webhook: discord.Webhook, message: discord.Message, char: dict, content: str):
+    async def send_message(webhook: discord.Webhook, message: discord.Message, char: CharacterInfo, content: str):
         kwargs = {
-            "username": char["name"],
-            "avatar_url": char["image"],
+            "username": char.name,
+            "avatar_url": char.image,
             "content": content,
             "wait": True
         }

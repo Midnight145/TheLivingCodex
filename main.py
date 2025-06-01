@@ -23,7 +23,8 @@ async def get_prefix(bot_, message):
     if message.guild is None:
         list_.append(">")
     else:
-        list_.append(bot_.db.execute("SELECT prefix FROM config WHERE server_id = ?", (message.guild.id,)).fetchone()[0])
+        list_.append(
+            bot_.db.execute("SELECT prefix FROM config WHERE server_id = ?", (message.guild.id,)).fetchone()[0])
     return list_
 
 connection = sqlite3.connect("chars.db", check_same_thread=False)
@@ -31,7 +32,6 @@ connection.row_factory = sqlite3.Row
 
 db = connection.cursor()
 db.execute("CREATE TABLE IF NOT EXISTS config (server_id INTEGER PRIMARY KEY, startup_channel INTEGER, whitelist_enabled BOOLEAN, prefix TEXT DEFAULT '>', log_cleanup_enabled BOOLEAN DEFAULT FALSE)")
-
 
 intents = discord.Intents.all()
 
@@ -48,6 +48,7 @@ async def on_ready():
         await bot.load_extension(i)
         bot.loaded_cogs.append(i)
     print("All cogs loaded successfully!")
+    # noinspection PyTypeChecker
     await bot.change_presence(status=discord.Status.online, activity=discord.Game("Rolling for initiative!"))
 
 

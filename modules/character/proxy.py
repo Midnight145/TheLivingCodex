@@ -3,6 +3,7 @@ import asyncio
 import discord
 from discord.ext import commands
 
+from modules.character.dndbeyond.CharacterInfo import CharacterInfo
 from modules.character.dndbeyond.util import Util
 
 
@@ -49,7 +50,7 @@ class Proxy(commands.Cog):
         await asyncio.sleep(3)
         await to_delete.delete()
 
-    def handle_proxied_message(self, message: discord.Message):
+    def handle_proxied_message(self, message: discord.Message) -> CharacterInfo | None:
         if isinstance(message.channel, discord.Thread):
             channel = message.channel.parent.id
             thread = True
@@ -60,11 +61,10 @@ class Proxy(commands.Cog):
         if not resp:
             return None
         if not thread:
-            return self.bot.db.execute("SELECT * FROM characters WHERE id = ?", (resp[0]["cid"],)).fetchone()
+            return CharacterInfo.fetch_character(resp[0]["cid"])
         for i in resp:
             if i["thread"] == message.channel.id:
-                char = self.bot.db.execute("SELECT * FROM characters WHERE id = ?", (i["cid"],)).fetchone()
-                return char
+                return CharacterInfo.fetch_character(i["cid"])
         return None
 
 

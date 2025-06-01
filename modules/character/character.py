@@ -6,6 +6,7 @@ import discord
 from discord.ext import commands
 from math import ceil
 
+from modules.character.dndbeyond.CharacterInfo import CharacterInfo
 from modules.character.dndbeyond.DDBCharacterInfo import DDBCharacterInfo
 from modules.character.dndbeyond.util import Util
 from modules.character.whitelist import Whitelist
@@ -41,8 +42,8 @@ class Character(commands.Cog):
                 data = (await resp.json())["data"]
         character = DDBCharacterInfo(data)
 
-        self.bot.db.execute("INSERT INTO characters (name, owner, backstory, race, classes, image, link) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                            (character.name, context.author.id, character.backstory, character.race, character.classes, character.image, ddb_link))
+        self.bot.db.execute("INSERT INTO characters (name, owner, backstory, race, classes, image, link, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                            (character.name, context.author.id, character.backstory, character.race, character.classes, character.image, ddb_link, "ddb"))
         self.bot.connection.commit()
         cid = self.bot.db.lastrowid
         embed = discord.Embed(
@@ -92,8 +93,8 @@ class Character(commands.Cog):
     async def view_character(self, context: commands.Context, cid: int):
         if not await self.check_character(context, cid, check_owner=False):
             return
-        character = self.bot.db.execute("SELECT * FROM characters WHERE id = ?", (cid,)).fetchone()
-        embed = Util.generate_character_embed(character)
+        character = CharacterInfo.fetch_character(cid)
+        embed = character.generate_embed()
 
         await context.send(embed=embed)
 
