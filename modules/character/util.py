@@ -8,8 +8,10 @@ class Util(commands.Cog):
 -----------------
 
 **Character Management:**
-    `>import <url>` - Imports a given character from a D&D Beyond link. The character sheet has to be public. (Edit --> Home --> Character Privacy --> Public)
-    `>update <id>` - Fetches the latest information for a character from D&D Beyond 
+    `>import <url>` - Imports a given character from a D&D Beyond or PathBuilder link.
+        - D&D Beyond characters must be public to be imported (Edit --> Home --> Character Privacy --> Public).
+        - The PathBuilder link is obtained from Menu --> Export --> Export JSON --> View JSON
+    `>update <id>` - Fetches the latest information for a character
     `>delete <id>` - Delete a character. You must be the owner of the character to delete it.
     
     `>add_prefix <id> <prefix>` - Add a prefix to a character. This prefix will be used to trigger the character. For example, if you add the prefix "!" to a character, you can trigger it by sending "!<message>" in any channel the bot can see.

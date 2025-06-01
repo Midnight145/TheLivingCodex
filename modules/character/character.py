@@ -8,7 +8,7 @@ from math import ceil
 
 from modules.character import CharacterInfo
 from modules.character.dndbeyond import DDBCharacterInfo
-from modules.character.dndbeyond.util import Util
+from modules.character.util import Util
 from modules.character.whitelist import Whitelist
 
 
@@ -23,15 +23,15 @@ class Character(commands.Cog):
         self.bot.db.execute("CREATE TABLE IF NOT EXISTS proxies (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, cid INTEGER, channel INTEGER, thread INTEGER)")
         self.bot.db.execute("CREATE TABLE IF NOT EXISTS channels (id INTEGER, whitelisted BOOLEAN, cooldown INTEGER, type TEXT)")
         self.bot.connection.commit()
-        self.api = "https://character-service.dndbeyond.com/character/v5/character/"
+        self.ddb_api = "https://character-service.dndbeyond.com/character/v5/character/"
 
 
-    @commands.command(aliases=['import_ddb'])
-    async def import_ddb_character(self, context: commands.Context, ddb_link: str):
+    @commands.command(aliases=['import'])
+    async def import_character(self, context: commands.Context, ddb_link: str):
         char_id = self.fetch_cid_from_link(ddb_link)
         if char_id == -1:
             return await context.send("Invalid link!")
-        link = self.api + str(char_id)
+        link = self.ddb_api + str(char_id)
         async with aiohttp.ClientSession() as session:
             async with session.get(link) as resp:
                 if resp.status == 403:
@@ -66,7 +66,7 @@ class Character(commands.Cog):
 
         if char_id == -1:
             return await context.send("Invalid link!")
-        link = self.api + str(char_id)
+        link = self.ddb_api + str(char_id)
         async with aiohttp.ClientSession() as session:
             async with session.get(link) as resp:
                 if resp.status != 200:

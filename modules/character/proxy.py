@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 
 from modules.character import CharacterInfo
-from modules.character.dndbeyond.util import Util
+from modules.character.util import Util
 
 
 # noinspection DuplicatedCode

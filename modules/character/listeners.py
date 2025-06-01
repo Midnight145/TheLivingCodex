@@ -6,7 +6,7 @@ from discord.ext import commands
 
 from modules.character import CharacterInfo
 from modules.character.proxy import Proxy
-from modules.character.dndbeyond.util import Util
+from modules.character.util import Util
 from modules.character.whitelist import Whitelist
 from modules.character.logclean import LogCleanup
 
