@@ -34,12 +34,16 @@ class CharacterInfo:
             case "pb":
                 from modules.character.pathbuilder.PBCharacterInfo import PBCharacterInfo
                 return PBCharacterInfo.from_row(resp)
+            case "custom":
+                return CharacterInfo.from_row(resp)
             case _:
                 raise ValueError(f"Unknown character type: {type_}")
 
     @staticmethod
     def from_row(data: sqlite3.Row) -> 'CharacterInfo':
-        raise NotImplementedError("This method should be implemented in subclasses.")
+        ret = CharacterInfo()
+        CharacterInfo._populate_obj(ret, data)
+        return ret
 
     @staticmethod
     def _populate_obj(obj: 'CharacterInfo', data: sqlite3.Row):
@@ -55,3 +59,17 @@ class CharacterInfo:
 
     def generate_embed(self) -> discord.Embed:
         raise NotImplementedError("This method should be implemented in subclasses.")
+
+    def write_character(self, db):
+        db.execute("UPDATE characters SET id = ?, name = ?, race = ?, classes = ?, image = ?, backstory = ?, owner = ?, link = ?, type = ? WHERE id = ?",
+                   (self.id,
+                    self.name,
+                    self.race,
+                    self.classes if isinstance(self.classes, str) else dataclasses.asdict(self.classes),
+                    self.image,
+                    self.backstory,
+                    self.owner,
+                    self.link,
+                    self.type,
+                    self.id
+                    ))

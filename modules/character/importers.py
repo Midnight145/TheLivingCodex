@@ -6,7 +6,6 @@ from discord.ext import commands
 from modules.character import CharacterInfo
 from modules.character.dndbeyond import DDBImporter
 from modules.character.pathbuilder import PBImporter
-from modules.character.util import Util
 
 
 # noinspection PyUnusedLocal
@@ -16,7 +15,6 @@ async def update_err(context: commands.Context, cid: int):
 # noinspection PyUnusedLocal
 async def import_err(context: commands.Context, link: str):
     await context.send("Unsupported import method! Please use a valid D&D Beyond or PathBuilder link.")
-
 
 
 class CharacterImporter(commands.Cog):
@@ -67,7 +65,7 @@ class CharacterImporter(commands.Cog):
 
     @commands.command(aliases=["update"])
     async def update_character(self, context: commands.Context, cid: int):
-        if not await Util.check_character(context, cid):
+        if not await self.check_character(context, cid):
             return
 
         character = CharacterInfo.fetch_character(cid)
@@ -79,6 +77,16 @@ class CharacterImporter(commands.Cog):
             (updated.name, context.author.id, updated.backstory, updated.race, updated.classes, updated.image, character.link, cid))
         self.bot.connection.commit()
         await context.send(f"Character {updated.name} successfully updated!")
+
+    async def check_character(self, context, cid, check_owner=True):
+        character = self.bot.db.execute("SELECT * FROM characters WHERE id = ?", (cid,)).fetchone()
+        if character is None:
+            await context.send("Character not found!")
+            return False
+        if check_owner and character["owner"] != context.author.id:
+            await context.send("You do not own this character!")
+            return False
+        return True
 
     @staticmethod
     def fetch_import_method(link: str) -> str:

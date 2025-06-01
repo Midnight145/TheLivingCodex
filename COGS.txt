@@ -1,4 +1,6 @@
-modules.character.character
+modules.character.characters
+modules.character.custom
+modules.character.importers
 modules.character.prefix
 modules.character.util
 modules.character.whitelist
