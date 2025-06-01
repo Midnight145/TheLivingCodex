@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 from modules.character.proxy import Proxy
-from modules.character.util import Util
+from modules.character.dndbeyond.util import Util
 from modules.character.whitelist import Whitelist
 from modules.character.logclean import LogCleanup
 
@@ -32,7 +32,7 @@ class Listeners(commands.Cog):
             char, found_prefix = Util.instance.fetch_char_info(message.content, message.author.id)
             if char is None or found_prefix is None:
                 return
-            full_message = message.content[len(found_prefix['prefix']):]
+            full_message = message.content[len(found_prefix):]
         else:
             full_message = message.content
 
@@ -76,12 +76,11 @@ class Listeners(commands.Cog):
                 webhook = i
                 break
         try:
-            message = await webhook.fetch_message(payload.message_id, thread=channel if thread else discord.utils.MISSING)
+            message: discord.WebhookMessage = await webhook.fetch_message(payload.message_id, thread=channel if thread else discord.utils.MISSING)
         except (discord.NotFound, AttributeError):
             return
         if message.webhook_id != webhook.id:
             return
-        message: discord.WebhookMessage
 
         character = self.bot.db.execute("SELECT * FROM characters WHERE name = ?",
                                         (message.author.display_name,)).fetchone()
@@ -113,6 +112,7 @@ class Listeners(commands.Cog):
         elif payload.emoji.name == "📋":
             member = self.bot.get_user(payload.user_id)
             await message.remove_reaction(payload.emoji, member)
+            # todo: add in db what type of character this is
             embed = Util.generate_character_embed(character)
             await member.send(embed=embed)
             await message.remove_reaction(payload.emoji, payload.member)

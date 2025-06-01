@@ -17,13 +17,13 @@ class Prefix(commands.Cog):
         if character["owner"] != context.author.id:
             await context.send("You do not own this character!")
             return
-        self.bot.db.execute("INSERT INTO prefixes (cid, prefix) VALUES (?, ?)", (cid, prefix))
+        self.bot.db.execute("INSERT INTO prefixes (cid, prefix, owner) VALUES (?, ?, ?)", (cid, prefix, context.author.id))
         self.bot.connection.commit()
         await context.send("Prefix added!")
 
     async def add_prefix_dynamic(self, context, cid: int = None):
         prefix = self.__fetch_prefix(context, cid)
-        self.bot.db.execute("INSERT INTO prefixes (cid, prefix) VALUES (?, ?)", (cid, prefix))
+        self.bot.db.execute("INSERT INTO prefixes (cid, prefix, owner) VALUES (?, ?, ?)", (cid, prefix, context.author.id))
         self.bot.connection.commit()
         await context.send("Prefix added!")
 

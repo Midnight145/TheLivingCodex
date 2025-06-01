@@ -3,7 +3,7 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from modules.character.util import Util
+from modules.character.dndbeyond.util import Util
 
 
 # noinspection DuplicatedCode
@@ -64,8 +64,9 @@ class Proxy(commands.Cog):
         for i in resp:
             if i["thread"] == message.channel.id:
                 char = self.bot.db.execute("SELECT * FROM characters WHERE id = ?", (i["cid"],)).fetchone()
-
                 return char
+        return None
+
 
 async def setup(bot):
     await bot.add_cog(Proxy(bot))

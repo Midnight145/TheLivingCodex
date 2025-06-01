@@ -6,8 +6,8 @@ import discord
 from discord.ext import commands
 from math import ceil
 
-from modules.character.CharacterInfo import CharacterInfo
-from modules.character.util import Util
+from modules.character.dndbeyond.DDBCharacterInfo import DDBCharacterInfo
+from modules.character.dndbeyond.util import Util
 from modules.character.whitelist import Whitelist
 
 
@@ -25,8 +25,8 @@ class Character(commands.Cog):
         self.api = "https://character-service.dndbeyond.com/character/v5/character/"
 
 
-    @commands.command(aliases=['import'])
-    async def import_character(self, context: commands.Context, ddb_link: str):
+    @commands.command(aliases=['import_ddb'])
+    async def import_ddb_character(self, context: commands.Context, ddb_link: str):
         char_id = self.fetch_cid_from_link(ddb_link)
         if char_id == -1:
             return await context.send("Invalid link!")
@@ -39,7 +39,7 @@ class Character(commands.Cog):
                 if resp.status != 200:
                     return await context.send("Failed to fetch character data!")
                 data = (await resp.json())["data"]
-        character = CharacterInfo(data)
+        character = DDBCharacterInfo(data)
 
         self.bot.db.execute("INSERT INTO characters (name, owner, backstory, race, classes, image, link) VALUES (?, ?, ?, ?, ?, ?, ?)",
                             (character.name, context.author.id, character.backstory, character.race, character.classes, character.image, ddb_link))
@@ -71,7 +71,7 @@ class Character(commands.Cog):
                 if resp.status != 200:
                     return await context.send("Failed to fetch character data!")
                 data = (await resp.json())["data"]
-        character = CharacterInfo(data)
+        character = DDBCharacterInfo(data)
         self.bot.db.execute(
             "UPDATE characters SET (name, owner, backstory, race, classes, image, link) = (?, ?, ?, ?, ?, ?, ?) WHERE id = ?",
             (character.name, context.author.id, character.backstory, character.race, character.classes, character.image, ddb_link, cid))

@@ -31,7 +31,7 @@ class Util(commands.Cog):
     ❔ - View this help message.
 """
 
-    base_link = "https://www.dndbeyond.com/"
+
     instance: 'Util' = None
     def __init__(self, bot):
         self.bot = bot
@@ -48,20 +48,14 @@ class Util(commands.Cog):
 
         return webhook
 
-    def fetch_char_info(self, content, author):
-        prefixes = self.bot.db.execute("SELECT * FROM prefixes").fetchall()
-        found_prefix = None
-        found_prefixes = [i for i in prefixes if content.startswith(i["prefix"])]
-        char = None
-        for prefix in found_prefixes:
-            potential_cid = prefix["cid"]
-            tmp = self.bot.db.execute("SELECT * FROM characters WHERE id = ?", (potential_cid,)).fetchone()
-            if tmp["owner"] != author:
-                continue
-            else:
-                found_prefix = prefix
-                char = tmp
-        return char, found_prefix
+    def fetch_char_info(self, content, author) -> tuple[dict, str]:
+        prefixes = self.bot.db.execute("SELECT * FROM prefixes WHERE owner = ?", (author,)).fetchall()
+        found_prefixes = sorted([i for i in prefixes if content.startswith(i["prefix"])],
+                                key = lambda x: len(x["prefix"]), reverse=True)
+        found_prefix = found_prefixes[0] if found_prefixes else None
+        char = self.bot.db.execute("SELECT * FROM characters WHERE id = ?", (found_prefix["cid"],)).fetchone()
+
+        return char, found_prefix["prefix"]
 
     @staticmethod
     def fetch_channel_info(context):
@@ -72,36 +66,6 @@ class Util(commands.Cog):
             channel = context.channel.parent.id
             thread = context.channel.id
         return channel, thread
-
-    @staticmethod
-    def generate_character_embed(character):
-        embed = discord.Embed(
-            title=f"Info for {character['name']}",
-            color=discord.Color.gold(),
-            timestamp=datetime.datetime.now(datetime.timezone.utc)
-        )
-        embed.add_field(name="Player", value=f"<@{character['owner']}>")
-        embed.add_field(name="Link", value=f"[{character['name']}]({character['link']})")
-        embed.add_field(name="Race", value=character["race"], inline=False)
-
-        class_str = ""
-        classes = json.loads(character["classes"])
-        base_str = "{} - [{}]({})"
-        base_sub_str = "{} - [{}]({}) | [{}]({})"
-        for i in classes:
-            if i["subclass"] == "":
-                class_str += base_str.format(i["level"], i["name"], Util.base_link + i["url"]) + "\n"
-            else:
-                class_str += base_sub_str.format(i["level"], i["name"], Util.base_link + i["url"], i["subclass"], Util.base_link + i["subclass_url"]) + "\n"
-
-        embed.add_field(name="Class(es)", value=class_str, inline=False)
-
-        # if len(character["backstory"]) > 1024:
-        #     embed.add_field(name="Backstory", value=character["backstory"][:1021] + "...", inline=False)
-        # else:
-        #     embed.add_field(name="Backstory", value=character["backstory"], inline=False)
-        embed.set_image(url=character["image"])
-        return embed
 
 
 async def setup(bot):
