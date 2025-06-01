@@ -68,6 +68,16 @@ class Util(commands.Cog):
             thread = context.channel.id
         return channel, thread
 
+    @staticmethod
+    async def check_character(context, cid, check_owner=True):
+        character = Util.instance.bot.db.execute("SELECT * FROM characters WHERE id = ?", (cid,)).fetchone()
+        if character is None:
+            await context.send("Character not found!")
+            return False
+        if check_owner and character["owner"] != context.author.id:
+            await context.send("You do not own this character!")
+            return False
+        return True
 
 async def setup(bot):
     await bot.add_cog(Util(bot))
