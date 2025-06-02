@@ -13,7 +13,7 @@ class PBCharacterInfo(CharacterInfo):
         if data is None:
             return
         self.name = data["name"]
-        self.classes = data["class"]
+        self.classes = f"{data['level']} - {data['class']}"
         for i in data["feats"]:
             feat_name: str = i[0]
             if feat_name.endswith("Dedication"):

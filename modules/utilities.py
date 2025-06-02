@@ -9,8 +9,6 @@ class Utilities(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    BOT_PREFIX = '>'
-
     @commands.command(aliases=["kill", "stop"])
     @commands.is_owner()
     async def die(self, context):

@@ -16,20 +16,20 @@ class CharacterModule(commands.Cog):
     -----------------
 
     **Character Management:**
-        `>import <url>` - Imports a given character from a D&D Beyond or PathBuilder link.
-            - D&D Beyond characters must be public to be imported (Edit --> Home --> Character Privacy --> Public).
-            - The PathBuilder link is obtained from Menu --> Export --> Export JSON --> View JSON
-        `>update <id>` - Fetches the latest information for a character
-        `>delete <id>` - Delete a character. You must be the owner of the character to delete it.
+        `{prefix}import <url>` - Imports a given character from a D&D Beyond or PathBuilder link.
+              D&D Beyond characters must be public to be imported (Edit --> Home --> Character Privacy --> Public).
+              The PathBuilder link is obtained from Menu --> Export --> Export JSON --> View JSON
+        `{prefix}update <id>` - Fetches the latest information for a character
+        `{prefix}delete <id>` - Delete a character. You must be the owner of the character to delete it.
 
-        `>add_prefix <id> <prefix>` - Add a prefix to a character. This prefix will be used to trigger the character. For example, if you add the prefix "!" to a character, you can trigger it by sending "!<message>" in any channel the bot can see.
-        `>remove_prefix <id> <prefix>` - Remove a prefix from a character. You must be the owner of the character to remove a prefix.
+        `{prefix}add_prefix <id> <prefix>` - Add a prefix to a character. This prefix will be used to trigger the character. For example, if you add the prefix "!" to a character, you can trigger it by sending "!<message>" in any channel the bot can see.
+        `{prefix}remove_prefix <id> <prefix>` - Remove a prefix from a character. You must be the owner of the character to remove a prefix.
 
-        `>list` - List all of your characters. This will also show character ids, used in other commands.    
-        `>view <id>` - View a character's information. This will show all information about the character, including the owner
+        `{prefix}list` - List all of your characters. This will also show character ids, used in other commands.
+        `{prefix}view <id>` - View a character's information. This will show all information about the character, including the owner
 
-        `>proxy <prefix|id>` - Proxy as a character in the current channel. This will allow you to send messages as the character without needing to use a prefix. Starting a message with '[' will disable proxying for that message.
-        `>unproxy` - Disable proxying in the current channel.
+        `{prefix}proxy <prefix|id>` - Proxy as a character in the current channel. This will allow you to send messages as the character without needing to use a prefix. Starting a message with '[' will disable proxying for that message.
+        `{prefix}unproxy` - Disable proxying in the current channel.
 
     **Reactions:**
         ✖ - Delete a proxied message. You must be the owner of the character to delete it.
@@ -37,6 +37,20 @@ class CharacterModule(commands.Cog):
         📋 - View the character's information.
         ❔ - View this help message.
     """
+
+    custom_help_str = """
+    -----------------
+
+    **Custom Characters:**
+
+        `{prefix}create` - Starts interactive character creation
+        `{prefix}edit_character <id> <args>` - Edit character attributes
+            Usage: `{prefix}edit_character <id> key=value key2=value2 ...`
+            Possible keys: `name`, `race`, `classes`, `backstory`
+        `{prefix}edit_image <id> [image_url]` - Edit the character's image. You can also attach an image to the message.
+            Images for PathBuilder characters and D&D Beyond characters are editable as well
+    """
+
 
     @commands.command(aliases=["delete"])
     async def delete_character(self, context: commands.Context, cid: int):
@@ -83,11 +97,14 @@ class CharacterModule(commands.Cog):
 
     @commands.command()
     async def help(self, context: commands.Context):
+        prefix = self.bot.get_custom_prefix(self.bot, context.message)
         if context.guild and context.author.guild_permissions.manage_channels:
-            await context.send(self.help_str)
-            await context.send(Whitelist.whitelist_help)
+            await context.send(self.help_str.format(prefix=prefix))
+            await context.send(self.custom_help_str.format(prefix=prefix))
+            await context.send(Whitelist.whitelist_help.format(prefix=prefix))
         else:
-            await context.send(self.help_str)
+            await context.send(self.custom_help_str.format(prefix=prefix))
+            await context.send(self.help_str.format(prefix=prefix))
 
     async def check_character(self, context, cid, check_owner=True):
         character = self.bot.db.execute("SELECT * FROM characters WHERE id = ?", (cid,)).fetchone()

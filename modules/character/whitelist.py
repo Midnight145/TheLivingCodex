@@ -24,13 +24,13 @@ class Whitelist(commands.Cog):
 ------------------
 
 **Whitelists:**
-    `>whitelist_channel` <channel> <cooldown> - Whitelist a channel. Cooldown is optional and defaults to 0.
-    `>whitelist_category` <category> <cooldown> - Whitelist a category.
+    `{prefix}whitelist_channel` <channel> <cooldown> - Whitelist a channel. Cooldown is optional and defaults to 0.
+    `{prefix}whitelist_category` <category> <cooldown> - Whitelist a category.
     
 **Blacklists:**
     Whitelist will override blacklist.
-    `>blacklist_channel` <channel> - Blacklist a channel.
-    `>blacklist_category` <category> - Blacklist a category.
+    `{prefix}blacklist_channel` <channel> - Blacklist a channel.
+    `{prefix}blacklist_category` <category> - Blacklist a category.
 """
     def __init__(self, bot):
         self.bot = bot

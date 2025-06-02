@@ -37,7 +37,7 @@ intents = discord.Intents.all()
 
 bot = LivingCodex(db, connection, command_prefix=get_prefix, intents=intents, help_command=None)
 LivingCodex.instance = bot
-
+bot.get_custom_prefix = get_prefix
 
 @bot.event
 async def on_ready():
