@@ -30,7 +30,9 @@ class CharacterModule(commands.Cog):
 
         `{prefix}proxy <prefix|id>` - Proxy as a character in the current channel. This will allow you to send messages as the character without needing to use a prefix. Starting a message with '[' will disable proxying for that message.
         `{prefix}unproxy` - Disable proxying in the current channel.
+"""
 
+    reaction_help_str = """
     **Reactions:**
         ✖ - Delete a proxied message. You must be the owner of the character to delete it.
         📝 - Edit a proxied message. You must be the owner of the character to edit it. 
@@ -97,14 +99,17 @@ class CharacterModule(commands.Cog):
 
     @commands.command()
     async def help(self, context: commands.Context):
-        prefix = self.bot.get_custom_prefix(self.bot, context.message)
+        prefix = await self.bot.get_custom_prefix(self.bot, context.message)
+        prefix = prefix[-1]
         if context.guild and context.author.guild_permissions.manage_channels:
             await context.send(self.help_str.format(prefix=prefix))
+            await context.send(self.reaction_help_str.format(prefix=prefix))
             await context.send(self.custom_help_str.format(prefix=prefix))
             await context.send(Whitelist.whitelist_help.format(prefix=prefix))
         else:
-            await context.send(self.custom_help_str.format(prefix=prefix))
             await context.send(self.help_str.format(prefix=prefix))
+            await context.send(self.reaction_help_str.format(prefix=prefix))
+            await context.send(self.custom_help_str.format(prefix=prefix))
 
     async def check_character(self, context, cid, check_owner=True):
         character = self.bot.db.execute("SELECT * FROM characters WHERE id = ?", (cid,)).fetchone()
