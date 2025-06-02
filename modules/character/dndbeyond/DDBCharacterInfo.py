@@ -41,15 +41,17 @@ class DDBCharacterInfo(CharacterInfo):
         embed.add_field(name="Race", value=self.race, inline=False)
 
         class_str = ""
-        classes = json.loads(self.classes)
+        # classes = json.loads(self.classes)
         base_str = "{} - [{}]({})"
         base_sub_str = "{} - [{}]({}) | [{}]({})"
-        for i in classes:
-            if i["subclass"] == "":
-                class_str += base_str.format(i["level"], i["name"], DDBCharacterInfo.base_link + i["url"]) + "\n"
+
+        for i in self.classes:
+            i: DDBClass
+            if i.subclass == "":
+                class_str += base_str.format(i.level, i.name, DDBCharacterInfo.base_link + i.url) + "\n"
             else:
-                class_str += base_sub_str.format(i["level"], i["name"], DDBCharacterInfo.base_link + i["url"], i["subclass"],
-                                                 DDBCharacterInfo.base_link + i["subclass_url"]) + "\n"
+                class_str += base_sub_str.format(i.level, i.name, DDBCharacterInfo.base_link + i.url, i.subclass,
+                                                 DDBCharacterInfo.base_link + i.subclass_url) + "\n"
 
         embed.add_field(name="Class(es)", value=class_str, inline=False)
 
