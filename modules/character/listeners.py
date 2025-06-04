@@ -105,7 +105,7 @@ class Listeners(commands.Cog):
             to_delete = await message.channel.send("Enter new message content:")
             try:
                 self.edit_checks[payload.member.id] = message
-                msg = await self.bot.wait_for("message", check=lambda m: m.author == payload.member, timeout=120)
+                msg = await self.bot.wait_for("message", check=lambda m: m.author == payload.member and m.guild.id == payload.guild_id and m.channel.id == payload.channel_id, timeout=120)
                 await message.edit(content=msg.content)
                 await msg.delete()
             except asyncio.TimeoutError:
