@@ -16,9 +16,12 @@ class CharacterModule(commands.Cog):
     -----------------
 
     **Character Management:**
-        `{prefix}import <url>` - Imports a given character from a D&D Beyond or PathBuilder link.
+        `{prefix}import [url]` - Imports a given character from a D&D Beyond, PathBuilder, Scoundry, or CompCon link.
               D&D Beyond characters must be public to be imported (Edit --> Home --> Character Privacy --> Public).
               The PathBuilder link is obtained from Menu --> Export --> Export JSON --> View JSON
+              Scoundry links are obtained from Export --> Share as URL
+              CompCon characters should be exported to a file and attached to the message, instead of adding a link.
+                  Pilot Options --> Export Pilot --> Export Data File
         `{prefix}update <id>` - Fetches the latest information for a character
         `{prefix}delete <id>` - Delete a character. You must be the owner of the character to delete it.
 
@@ -50,7 +53,7 @@ class CharacterModule(commands.Cog):
             Usage: `{prefix}edit_character <id> key=value key2=value2 ...`
             Possible keys: `name`, `race`, `classes`, `backstory`
         `{prefix}edit_image <id> [image_url]` - Edit the character's image. You can also attach an image to the message.
-            Images for PathBuilder characters and D&D Beyond characters are editable as well
+            Images for imported characters are editable as well
     """
 
 
