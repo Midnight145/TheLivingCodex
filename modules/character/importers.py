@@ -1,11 +1,16 @@
 import datetime
+import json
+from io import StringIO
 
+import aiohttp
 import discord
 from discord.ext import commands
 
 from modules.character import CharacterInfo
+from modules.character.compcon import CompconImporter
 from modules.character.dndbeyond import DDBImporter
 from modules.character.pathbuilder import PBImporter
+from modules.character.scoundry import ScoundryImporter
 
 
 # noinspection PyUnusedLocal
@@ -22,12 +27,16 @@ class CharacterImporter(commands.Cog):
     importers = {
         "ddb": DDBImporter.import_character,
         "pb": PBImporter.import_character,
+        "scoundry": ScoundryImporter.import_character,
+        "compcon": CompconImporter.import_character,
         "_": update_err
     }
 
     updaters = {
         "ddb": DDBImporter.update_character,
         "pb": PBImporter.update_character,
+        "scoundry": ScoundryImporter.update_character,
+        "compcon": CompconImporter.update_character,
         "_": update_err
     }
 
@@ -43,14 +52,27 @@ class CharacterImporter(commands.Cog):
 
 
     @commands.command(aliases=['import'])
-    async def import_character(self, context: commands.Context, link: str):
-        type_ = self.fetch_import_method(link)
-        character = await self.importers.get(type_, self.importers["_"])(context, link)
+    async def import_character(self, context: commands.Context, link: str = None):
+        character = None
+        if link is None:
+            if len(context.message.attachments):
+                character = await self.import_from_file(context, context.message.attachments[0].url)
+                link = ""
+                type_ = character.type
+            else:
+                await context.send("Please provide a link to a character or attach a file.")
+                return
+        else:
+            type_ = self.fetch_import_method(link)
+            character = await self.importers.get(type_, self.importers["_"])(context, link)
         if character is None:
             return
-        self.bot.db.execute("INSERT INTO characters (name, owner, backstory, race, classes, image, link, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                            (character.name, context.author.id, character.backstory, character.race, character.classes, character.image, link, type_))
+        character.owner = context.author.id
+        character.link = link
+        character.type = type_
+        character.write_character(self.bot.db, create=True)
         self.bot.connection.commit()
+
         cid = self.bot.db.lastrowid
         embed = discord.Embed(
             title=f"Character Created",
@@ -60,7 +82,7 @@ class CharacterImporter(commands.Cog):
         )
         embed.set_image(url=character.image)
         await context.send(embed=embed)
-        await context.send(f"Character created with character id {cid}, run `>add_prefix <id>` to add a prefix to "
+        await context.send(f"Character created with character id {cid}, run `{(await self.bot.get_custom_prefix(self.bot, context.message))[-1]}add_prefix <id>` to add a prefix to "
                            f"this character!")
 
     @commands.command(aliases=["update"])
@@ -72,9 +94,7 @@ class CharacterImporter(commands.Cog):
         updated = await self.updaters.get(character.type, self.updaters["_"])(context, character.link)
         if updated is None:
             return
-        self.bot.db.execute(
-            "UPDATE characters SET (name, owner, backstory, race, classes, image, link) = (?, ?, ?, ?, ?, ?, ?) WHERE id = ?",
-            (updated.name, context.author.id, updated.backstory, updated.race, updated.classes, updated.image, character.link, cid))
+        character.write_character(self.bot.db, create=False)
         self.bot.connection.commit()
         await context.send(f"Character {updated.name} successfully updated!")
 
@@ -94,7 +114,31 @@ class CharacterImporter(commands.Cog):
             return "ddb"
         if "pathbuilder2e.com" in link:
             return "pb"
+        if "scoundry.com" in link:
+            return "scoundry"
+        if "compcon.app" in link:
+            return "compcon"
         return "_"
+
+    @staticmethod
+    async def import_from_file(context: commands.Context, link: str) -> CharacterInfo | None:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(link) as resp:
+                if resp.status != 200:
+                    return None
+
+                text = await resp.text()
+                print(text)
+                data = json.loads(text)
+
+
+        # if a file has all of these, its probably compcon
+        compcon_keys = ["id", "level", "callsign", "name", "player_name", "mechs", "background"]
+        if all(key in data for key in compcon_keys):
+            return await CompconImporter.import_character(context, text)
+
+        return None
+        # return "_", data
 
 
 async def setup(bot):

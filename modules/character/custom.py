@@ -60,7 +60,7 @@ class CustomCharacterModule(commands.Cog):
         embed.set_image(url=image)
         cid = self.bot.db.lastrowid
         self.bot.db.execute("UPDATE characters SET image = ? WHERE id = ?", (CustomCharacterModule.__image_api.format(cid), cid))
-
+        self.bot.connection.commit()
         await context.send(embed=embed)
         await context.send(f"Character created with character id {cid}, run `>add_prefix` to add a prefix to "
                            f"this character!")
@@ -84,6 +84,7 @@ class CustomCharacterModule(commands.Cog):
                 return
             setattr(character, k, v)
         character.write_character(self.bot.db)
+        self.bot.connection.commit()
 
     @commands.command()
     async def edit_image(self, context: commands.Context, cid: int, image: str = None):

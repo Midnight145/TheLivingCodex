@@ -1,0 +1,1 @@
+from .CompconCharacterInfo import CompconCharacterInfo
