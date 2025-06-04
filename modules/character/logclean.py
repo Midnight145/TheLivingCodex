@@ -34,9 +34,11 @@ class LogCleanup(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        if message.guild is None:
+            return
         if message.guild.id not in self.enabled:
             self.enabled[message.guild.id] = 0
-        if message.guild is None or not self.enabled[message.guild.id] or not message.author.bot:
+        if not self.enabled[message.guild.id] or not message.author.bot:
             return
         username = message.author.display_name
         if "#" in username:

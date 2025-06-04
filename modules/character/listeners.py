@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 
 from modules.character import CharacterInfo
+from modules.character.characters import CharacterModule
 from modules.character.proxy import Proxy
 from modules.character.util import Util
 from modules.character.whitelist import Whitelist
@@ -90,7 +91,7 @@ class Listeners(commands.Cog):
         
         if character is None:
             return
-        character = CharacterInfo.from_dict(character)
+        character = CharacterInfo.fetch_character(character["id"])
         if payload.emoji.name == "✖":
             if not payload.user_id == character.owner:
                 await message.remove_reaction(payload.emoji, payload.member)
@@ -124,7 +125,9 @@ class Listeners(commands.Cog):
 
         elif payload.emoji.name == "❔":
             member = self.bot.get_user(payload.user_id)
-            await member.send(Util.help_str)
+            await member.send(CharacterModule.help_str)
+            await member.send(CharacterModule.custom_help_str)
+            await member.send(CharacterModule.reaction_help_str)
 
             await message.remove_reaction(payload.emoji, payload.member)
 
