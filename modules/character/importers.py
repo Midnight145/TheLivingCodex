@@ -1,16 +1,12 @@
 import datetime
 import json
-from io import StringIO
 
 import aiohttp
 import discord
 from discord.ext import commands
 
-from modules.character import CharacterInfo
+from modules.character import CharacterInfo, ModuleDefinitions
 from modules.character.compcon import CompconImporter
-from modules.character.dndbeyond import DDBImporter
-from modules.character.pathbuilder import PBImporter
-from modules.character.scoundry import ScoundryImporter
 
 
 # noinspection PyUnusedLocal
@@ -23,22 +19,6 @@ async def import_err(context: commands.Context, link: str):
 
 
 class CharacterImporter(commands.Cog):
-
-    importers = {
-        "ddb": DDBImporter.import_character,
-        "pb": PBImporter.import_character,
-        "scoundry": ScoundryImporter.import_character,
-        "compcon": CompconImporter.import_character,
-        "_": update_err
-    }
-
-    updaters = {
-        "ddb": DDBImporter.update_character,
-        "pb": PBImporter.update_character,
-        "scoundry": ScoundryImporter.update_character,
-        "compcon": CompconImporter.update_character,
-        "_": update_err
-    }
 
     def __init__(self, bot):
         self.bot = bot
@@ -54,6 +34,7 @@ class CharacterImporter(commands.Cog):
     @commands.command(aliases=['import'])
     async def import_character(self, context: commands.Context, link: str = None):
         character = None
+
         if link is None:
             if len(context.message.attachments):
                 character = await self.import_from_file(context, context.message.attachments[0].url)
@@ -63,9 +44,14 @@ class CharacterImporter(commands.Cog):
                 await context.send("Please provide a link to a character or attach a file.")
                 return
         else:
-            type_ = self.fetch_import_method(link)
-            character = await self.importers.get(type_, self.importers["_"])(context, link)
+            module = ModuleDefinitions.fetch_import_method(link)
+            type_ = module.type
+            if module is None:
+                await import_err(context, link)
+                return
+            character = await module.importer(context, link)
         if character is None:
+            await import_err(context, link)
             return
         character.owner = context.author.id
         character.link = link
@@ -86,14 +72,21 @@ class CharacterImporter(commands.Cog):
                            f"this character!")
 
     @commands.command(aliases=["update"])
-    async def update_character(self, context: commands.Context, cid: int):
+    async def update_character(self, context: commands.Context, cid: int, link = None):
         if not await self.check_character(context, cid):
             return
 
         character = CharacterInfo.fetch_character(cid)
-        updated = await self.updaters.get(character.type, self.updaters["_"])(context, character.link)
+        if link is None:
+            if context.message.attachments:
+                link = context.message.attachments[0].url
+            else:
+                link = character.link
+        updated = None
+        if character.type in ModuleDefinitions.modules:
+            updated = await ModuleDefinitions.modules[character.type].update_character(context, link)
         if updated is None:
-            return
+            await update_err(context, cid)
         character.write_character(self.bot.db, create=False)
         self.bot.connection.commit()
         await context.send(f"Character {updated.name} successfully updated!")
@@ -107,18 +100,6 @@ class CharacterImporter(commands.Cog):
             await context.send("You do not own this character!")
             return False
         return True
-
-    @staticmethod
-    def fetch_import_method(link: str) -> str:
-        if "dndbeyond.com" in link:
-            return "ddb"
-        if "pathbuilder2e.com" in link:
-            return "pb"
-        if "scoundry.com" in link:
-            return "scoundry"
-        if "compcon.app" in link:
-            return "compcon"
-        return "_"
 
     @staticmethod
     async def import_from_file(context: commands.Context, link: str) -> CharacterInfo | None:

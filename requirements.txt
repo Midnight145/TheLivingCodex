@@ -1,0 +1,4 @@
+aiohttp
+load_dotenv
+discord
+typing_extensions

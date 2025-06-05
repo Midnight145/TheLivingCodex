@@ -187,6 +187,11 @@ class Utilities(commands.Cog):
 
         await context.send(to_send)
 
+    @commands.Cog.listener()
+    async def on_guild_join(self, guild: discord.Guild):
+        if guild.id not in self.bot.config:
+            self.bot.db.execute("INSERT INTO config (server_id) VALUES (?)", (guild.id,))
+            self.bot.connection.commit()
 
 async def setup(bot):
     await bot.add_cog(Utilities(bot))

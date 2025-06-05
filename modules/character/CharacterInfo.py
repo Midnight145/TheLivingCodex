@@ -6,8 +6,7 @@ from typing import TypeVar, Type
 import discord
 
 from LivingCodex import LivingCodex
-from modules.character import Class
-
+from modules.character import Class, ModuleDefinitions
 
 ExtendsCharacterInfo = TypeVar("ExtendsCharacterInfo", bound='CharacterInfo')
 
@@ -43,6 +42,12 @@ class CharacterInfo:
 
     @staticmethod
     def _populate_obj(obj: ExtendsCharacterInfo, data: sqlite3.Row):
+        """
+        Populate a character info object from a database row. Should not be overridden in subclasses.
+        :param obj:
+        :param data:
+        :return:
+        """
         obj.id = data["id"]
         obj.name = data["name"]
         obj.race = data["race"]
@@ -107,20 +112,6 @@ class CharacterInfo:
 
     @staticmethod
     def __get_charinfo_class(string: str) -> Type[ExtendsCharacterInfo]:
-        from modules.character.scoundry import ScoundryCharacterInfo
-        from modules.character.dndbeyond import DDBCharacterInfo
-        from modules.character.pathbuilder.PBCharacterInfo import PBCharacterInfo
-        from modules.character.compcon import CompconCharacterInfo
-        match string:
-            case "ddb":
-                return DDBCharacterInfo
-            case "pb":
-                return PBCharacterInfo
-            case "scoundry":
-                return ScoundryCharacterInfo
-            case "compcon":
-                return CompconCharacterInfo
-            case "custom":
-                return CharacterInfo
-            case _:
-                raise ValueError(f"Unknown character type: {string}")
+        if string in ModuleDefinitions.modules:
+            return ModuleDefinitions.modules["string"].charinfo
+        raise ValueError(f"Unknown character type: {string}")

@@ -1,11 +1,21 @@
+import os
 import sqlite3
 import sys
 import traceback
+from sqlite3 import Connection
 
 import discord
 
 from LivingCodex import LivingCodex
 from modules.errorhandler import TracebackHandler
+
+import load_dotenv
+
+env = load_dotenv.load_dotenv()
+
+DB_FILE = os.getenv("DATABASE_FILE")
+if DB_FILE is None:
+    raise EnvironmentError("DATABASE_FILE environment variable is not set.")
 
 
 def dict_factory(cursor, row):
@@ -14,24 +24,33 @@ def dict_factory(cursor, row):
         d[col[0]] = row[idx]
     return d
 
-with open('token.txt', 'r') as token:
-    TOKEN = token.read().rstrip()
 
+def init_db() -> Connection:
+    connection = sqlite3.connect(DB_FILE, check_same_thread=False)
+    connection.row_factory = sqlite3.Row
+    db = connection.cursor()
+    db.execute("CREATE TABLE IF NOT EXISTS config (server_id INTEGER PRIMARY KEY, startup_channel INTEGER DEFAULT 0, whitelist_enabled BOOLEAN DEFAULT FALSE, prefix TEXT DEFAULT '>', log_clean_enabled BOOLEAN DEFAULT FALSE)")
+    db.execute("CREATE TABLE IF NOT EXISTS channels (id INTEGER PRIMARY KEY, whitelisted BOOLEAN DEFAULT FALSE, cooldown INTEGER DEFAULT 0, type TEXT)")
+    db.execute("CREATE TABLE IF NOT EXISTS characters (id INTEGER PRIMARY KEY, name TEXT, race TEXT, classes TEXT, image TEXT, backstory TEXT, link TEXT, owner INTEGER, type TEXT, data TEXT DEFAULT '')")
+    db.execute("CREATE TABLE IF NOT EXISTS prefixes (id INTEGER PRIMARY KEY, cid INTEGER, prefix TEXT, owner INTEGER)")
+    db.execute("CREATE TABLE IF NOT EXISTS proxies (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, cid INTEGER, channel INTEGER, thread INTEGER)")
+
+    return connection
+
+TOKEN = os.getenv("DISCORD_TOKEN")
+
+
+connection = init_db()
+db = connection.cursor()
 
 async def get_prefix(bot_, message):
     list_ = [bot_.user.mention + " "]
     if message.guild is None:
         list_.append(">")
     else:
-        list_.append(
-            bot_.db.execute("SELECT prefix FROM config WHERE server_id = ?", (message.guild.id,)).fetchone()[0])
+        list_.append(bot_.db.execute("SELECT prefix FROM config WHERE server_id = ?", (message.guild.id,)).fetchone()[0])
+
     return list_
-
-connection = sqlite3.connect("chars.db", check_same_thread=False)
-connection.row_factory = sqlite3.Row
-
-db = connection.cursor()
-db.execute("CREATE TABLE IF NOT EXISTS config (server_id INTEGER PRIMARY KEY, startup_channel INTEGER, whitelist_enabled BOOLEAN, prefix TEXT DEFAULT '>', log_cleanup_enabled BOOLEAN DEFAULT FALSE)")
 
 intents = discord.Intents.all()
 
