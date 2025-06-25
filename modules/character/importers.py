@@ -33,8 +33,6 @@ class CharacterImporter(commands.Cog):
 
     @commands.command(aliases=['import'])
     async def import_character(self, context: commands.Context, link: str = None):
-        character = None
-
         if link is None:
             if len(context.message.attachments):
                 character = await self.import_from_file(context, context.message.attachments[0].url)
@@ -84,7 +82,7 @@ class CharacterImporter(commands.Cog):
                 link = character.link
         updated = None
         if character.type in ModuleDefinitions.modules:
-            updated = await ModuleDefinitions.modules[character.type].update_character(context, link)
+            updated = await ModuleDefinitions.modules[character.type].updater(context, link)
         if updated is None:
             await update_err(context, cid)
         character.write_character(self.bot.db, create=False)

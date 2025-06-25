@@ -6,7 +6,7 @@ from typing import TypeVar, Type
 import discord
 
 from LivingCodex import LivingCodex
-from modules.character import Class, ModuleDefinitions
+from modules.character import Class
 
 ExtendsCharacterInfo = TypeVar("ExtendsCharacterInfo", bound='CharacterInfo')
 
@@ -112,6 +112,7 @@ class CharacterInfo:
 
     @staticmethod
     def __get_charinfo_class(string: str) -> Type[ExtendsCharacterInfo]:
+        from modules.character import ModuleDefinitions
         if string in ModuleDefinitions.modules:
-            return ModuleDefinitions.modules["string"].charinfo
+            return ModuleDefinitions.modules[string].charinfo
         raise ValueError(f"Unknown character type: {string}")

@@ -14,7 +14,7 @@ async def import_character(context: commands.Context, link: str) -> DDBCharacter
 
     Returns:
         str: A message indicating the result of the import operation.
-        :param context: the command invocation context
+        :param context: The command invocation context
         :param link: the D&D Beyond character link
     """
     ddb_api = "https://character-service.dndbeyond.com/character/v5/character/"

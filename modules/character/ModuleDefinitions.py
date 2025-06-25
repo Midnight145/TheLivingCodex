@@ -3,6 +3,7 @@ from typing import TypeVar, Type
 
 from modules.character import CharacterInfo
 from modules.character.compcon import CompconImporter, CompconCharacterInfo
+from modules.character.daggerheart import DaggerheartCharacterInfo, DaggerheartImporter
 from modules.character.dndbeyond import DDBImporter, DDBCharacterInfo
 from modules.character.pathbuilder import PBImporter, PBCharacterInfo
 from modules.character.scoundry import ScoundryImporter, ScoundryCharacterInfo
@@ -21,7 +22,8 @@ modules = {
     "pb": Module("pb", PBImporter.import_character, PBImporter.update_character, PBCharacterInfo),
     "scoundry": Module("scoundry", ScoundryImporter.import_character, ScoundryImporter.update_character, ScoundryCharacterInfo),
     "compcon": Module("compcon", CompconImporter.import_character, CompconImporter.update_character, CompconCharacterInfo),
-    "custom": Module("custom", None, None, CharacterInfo)
+    "custom": Module("custom", None, None, CharacterInfo),
+    "daggerheart": Module("daggerheart", DaggerheartImporter.import_character, DaggerheartImporter.update_character, DaggerheartCharacterInfo),
 }
 
 def fetch_import_method(link: str) -> Module | None:
@@ -33,4 +35,6 @@ def fetch_import_method(link: str) -> Module | None:
         return modules["scoundry"]
     if "compcon.app" in link:
         return modules["compcon"]
+    if "nexus/daggerheart" in link:
+        return modules["daggerheart"]
     return None
