@@ -21,7 +21,6 @@ class Whitelist(commands.Cog):
     instance: 'Whitelist' = None
     whitelist_help = """
 ## Whitelist Commands
-------------------
 
 **Whitelists:**
     `{prefix}whitelist_channel` <channel> <cooldown> - Whitelist a channel. Cooldown is optional and defaults to 0.
