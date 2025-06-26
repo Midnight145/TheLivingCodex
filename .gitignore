@@ -178,3 +178,5 @@ token.txt
 
 
 .env
+*.json
+*.db-journal
