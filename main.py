@@ -31,9 +31,10 @@ def init_db() -> Connection:
     db = connection.cursor()
     db.execute("CREATE TABLE IF NOT EXISTS config (server_id INTEGER PRIMARY KEY, startup_channel INTEGER DEFAULT 0, whitelist_enabled BOOLEAN DEFAULT FALSE, prefix TEXT DEFAULT '>', log_clean_enabled BOOLEAN DEFAULT FALSE)")
     db.execute("CREATE TABLE IF NOT EXISTS channels (id INTEGER PRIMARY KEY, whitelisted BOOLEAN DEFAULT FALSE, cooldown INTEGER DEFAULT 0, type TEXT)")
-    db.execute("CREATE TABLE IF NOT EXISTS characters (id INTEGER PRIMARY KEY, name TEXT, race TEXT, classes TEXT, image TEXT, backstory TEXT, link TEXT, owner INTEGER, type TEXT, data TEXT DEFAULT '')")
+    db.execute("CREATE TABLE IF NOT EXISTS characters (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, race TEXT, classes TEXT, image TEXT, backstory TEXT, link TEXT, owner INTEGER, type TEXT, data TEXT DEFAULT '')")
     db.execute("CREATE TABLE IF NOT EXISTS prefixes (id INTEGER PRIMARY KEY, cid INTEGER, prefix TEXT, owner INTEGER)")
     db.execute("CREATE TABLE IF NOT EXISTS proxies (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, cid INTEGER, channel INTEGER, thread INTEGER)")
+    db.execute("CREATE TABLE IF NOT EXISTS user_config (user_id INTEGER PRIMARY KEY, autoreact BOOLEAN DEFAULT FALSE)")
 
     return connection
 

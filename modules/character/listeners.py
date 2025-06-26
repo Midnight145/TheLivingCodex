@@ -20,6 +20,8 @@ class Listeners(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        Util.instance.create_user_config(message.author.id)
+
         if not message.content or message.author.id in self.edit_checks or message.guild is None or message.author.bot: return
         prefix = self.bot.db.execute("SELECT prefix FROM config WHERE server_id = ?", (message.guild.id,)).fetchone()[0]
         if message.content[0] == '[' or message.content[0] == prefix:
@@ -149,10 +151,11 @@ class Listeners(commands.Cog):
             kwargs["thread"] = message.channel
         await message.delete()
         msg = await webhook.send(**kwargs)
-        await msg.add_reaction("✖")
-        await msg.add_reaction("❔")
-        await msg.add_reaction("📝")
-        await msg.add_reaction("📋")
+        if Util.instance.get_user_config(message.author.id, "autoreact"):
+            await msg.add_reaction("✖")
+            await msg.add_reaction("❔")
+            await msg.add_reaction("📝")
+            await msg.add_reaction("📋")
         print("Adding message " + str(msg.id) + " to cache")
         LogCleanup.cache[message.id] = message.author.id
 
