@@ -20,8 +20,10 @@ class Listeners(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        Util.instance.create_user_config(message.author.id)
-
+        if message.guild:
+            Util.instance.create_user_config(message.author.id, message.guild.id)
+        else:
+            Util.instance.create_user_config(message.author.id)
         if not message.content or message.author.id in self.edit_checks or message.guild is None or message.author.bot: return
         prefix = self.bot.db.execute("SELECT prefix FROM config WHERE server_id = ?", (message.guild.id,)).fetchone()[0]
         if message.content[0] == '[' or message.content[0] == prefix:
@@ -151,7 +153,8 @@ class Listeners(commands.Cog):
             kwargs["thread"] = message.channel
         await message.delete()
         msg = await webhook.send(**kwargs)
-        if Util.instance.get_user_config(message.author.id, "autoreact"):
+        guild_id = 0 if message.guild is None else message.guild.id
+        if Util.instance.get_user_config(message.author.id, guild_id, "autoreact"):
             await msg.add_reaction("✖")
             await msg.add_reaction("❔")
             await msg.add_reaction("📝")

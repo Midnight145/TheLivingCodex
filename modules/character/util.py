@@ -46,16 +46,16 @@ class Util(commands.Cog):
             thread = context.channel.id
         return channel, thread
 
-    def get_user_config(self, user_id: int, config_name: str = None):
+    def get_user_config(self, user_id: int, guild_id: int, config_name: str = None):
         # Try to get the full row from cache
-        row = self._user_config_cache.get(user_id)
+        row = self._user_config_cache.get((user_id, guild_id))
         if row is None:
             row = self.bot.db.execute(
-                "SELECT * FROM user_config WHERE user_id = ?",
-                (user_id,)
+                "SELECT * FROM user_config WHERE user_id = ? AND guild_id = ?",
+                (user_id, guild_id)
             ).fetchone()
             if row:
-                self._user_config_cache[user_id] = row
+                self._user_config_cache[(user_id, guild_id)] = row
             else:
                 return None
 
@@ -65,7 +65,7 @@ class Util(commands.Cog):
             return None
         return row[config_name]
 
-    def set_user_config(self, user_id: int, config_name: str, value):
+    def set_user_config(self, user_id: int, guild_id: int, config_name: str, value):
         if config_name not in self.user_config_fields:
             return False
         if isinstance(value, bool):
@@ -76,46 +76,48 @@ class Util(commands.Cog):
             elif value.lower() == "false":
                 value = 0
         exists = self.bot.db.execute(
-            "SELECT 1 FROM user_config WHERE user_id = ?",
-            (user_id,)
+            "SELECT 1 FROM user_config WHERE user_id = ? AND guild_id = ?",
+            (user_id, guild_id)
         ).fetchone()
         if exists:
             self.bot.db.execute(
-                f"UPDATE user_config SET {config_name} = ? WHERE user_id = ?",
-                (value, user_id)
+                f"UPDATE user_config SET {config_name} = ? WHERE user_id = ? AND guild_id = ?",
+                (value, user_id, guild_id)
             )
         else:
-            columns = ', '.join(['user_id', config_name])
             self.bot.db.execute(
-                f"INSERT INTO user_config ({columns}) VALUES (?, ?)",
-                (user_id, value)
+                f"INSERT INTO user_config (user_id, guild_id, {config_name}) VALUES (?, ?, ?)",
+                (user_id, guild_id, value)
             )
         self.bot.connection.commit()
-        # Invalidate cache for this user
-        self._user_config_cache.pop(user_id, None)
+        self._user_config_cache.pop((user_id, guild_id), None)
         return True
 
-    def create_user_config(self, user_id: int):
-        if user_id in self._user_config_cache:
+    def create_user_config(self, user_id: int, guild_id: int = 0):
+        if (user_id, guild_id) in self._user_config_cache:
             return False
         exists = self.bot.db.execute(
-            "SELECT 1 FROM user_config WHERE user_id = ?",
-            (user_id,)
+            "SELECT 1 FROM user_config WHERE user_id = ? and guild_id = ?",
+            (user_id, guild_id)
         ).fetchone()
         if exists:
             return False
         self.bot.db.execute(
-            "INSERT INTO user_config (user_id) VALUES (?)",
-            (user_id,)
+            "INSERT INTO user_config (user_id, guild_id) VALUES (?, ?)",
+            (user_id, guild_id)
         )
-        self._user_config_cache.pop(user_id, None)
+        self._user_config_cache.pop((user_id, guild_id), None)
         return True
 
     @commands.command()
     async def config(self, context: commands.Context, option: str, value: str):
-        self.create_user_config(context.author.id)
-        author_id = context.author.id
-        if self.set_user_config(author_id, option, value):
+        if context.guild:
+            guild_id = context.guild.id
+        else:
+            guild_id = 0
+
+        self.create_user_config(context.author.id, guild_id)
+        if self.set_user_config(context.author.id, guild_id, option, value):
             await context.send(f"Configuration option `{option}` set to `{value}`.")
         else:
             await context.send(f"Configuration option `{option}` does not exist. Valid options are: " + ", ".join(self.user_config_fields))
