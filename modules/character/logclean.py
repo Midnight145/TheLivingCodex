@@ -9,7 +9,7 @@ Cleaner = Callable[[commands.Bot, discord.Message], Coroutine[Any, Any, tuple[in
 
 class LogCleanup(commands.Cog):
     cache: dict[int, int] = {}
-    cleanup: dict[str, Cleaner] = {"Catalogger": LogCleaners.catalogger}
+    cleanup: dict[str, Cleaner] = {"Catalogger": LogCleaners.catalogger, "Dyno": LogCleaners.dyno}
 
     def __init__(self, bot):
         self.bot = bot
