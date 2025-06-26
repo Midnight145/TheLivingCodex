@@ -27,10 +27,18 @@ async def catalogger(bot: commands.Bot, message: discord.Message) -> tuple[int, 
 
 
 async def dyno(bot: commands.Bot, message: discord.Message) -> tuple[int, int]:
-    if not message.embeds or not message.embeds[0].title or not (message.embeds[0].title.startswith("Message sent by") and "Deleted" in message.embeds[0].title):
+    if not message.embeds:
+        return 0, 0
+    embed = message.embeds[0]
+    if not embed.description or not embed.footer:
+        return 0, 0
+
+    regex = r"\*\*Message sent by <@!?\d+> Deleted in <#\d+>\*\*"
+    valid = re.search(regex, embed.description)
+    if not valid:
         return 0, 0
     footer = message.embeds[0].footer
-    regex = "Author: (\d+) | Message ID: (\d+).+"
+    regex = r"Author: (\d+) \| Message ID: (\d+)"
     result = re.search(regex, footer.text)
     if not result:
         return 0, 0

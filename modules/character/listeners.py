@@ -151,16 +151,17 @@ class Listeners(commands.Cog):
             kwargs["embed"] = await create_reply_embed(message_reference)
         if isinstance(message.channel, discord.Thread):
             kwargs["thread"] = message.channel
-        await message.delete()
         msg = await webhook.send(**kwargs)
+        print("Adding message " + str(msg.id) + " to cache")
+        LogCleanup.cache[message.id] = message.author.id
+        await message.delete()
         guild_id = 0 if message.guild is None else message.guild.id
         if Util.instance.get_user_config(message.author.id, guild_id, "autoreact"):
             await msg.add_reaction("✖")
             await msg.add_reaction("❔")
             await msg.add_reaction("📝")
             await msg.add_reaction("📋")
-        print("Adding message " + str(msg.id) + " to cache")
-        LogCleanup.cache[message.id] = message.author.id
+
 
 
 URL_REGEX = r'https?://\S+'  # Adjust regex as needed
