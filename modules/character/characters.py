@@ -16,7 +16,7 @@ class CharacterModule(commands.Cog):
     -----------------
 
     **Character Management:**
-        `{prefix}import [url]` - Imports a given character from a D&D Beyond, PathBuilder, Scoundry, or CompCon link.
+        `{prefix}import [url]` - Imports a given character from a D&D Beyond, PathBuilder, Scoundry, CompCon, or Demiplane (Daggerheart) link.
               D&D Beyond characters must be public to be imported (Edit --> Home --> Character Privacy --> Public).
               The PathBuilder link is obtained from Menu --> Export --> Export JSON --> View JSON
               Scoundry links are obtained from Export --> Share as URL
@@ -56,6 +56,18 @@ class CharacterModule(commands.Cog):
             Images for imported characters are editable as well
     """
 
+    config_help_str = """
+    -----------------
+   
+   ** Configuration:**
+   
+   User Configuration:
+   `{prefix}config <option> <value>` - Configure user settings. Options include:
+    - `autoreact` - Enable or disable automatic reactions to proxied messages. Set to `true` or `false`.
+    
+    Server Configuration:
+    `{prefix}prefix <new_prefix>` - Change the bot's prefix for the server. This will change the prefix for all commands.
+"""
 
     @commands.command(aliases=["delete"])
     async def delete_character(self, context: commands.Context, cid: int):
@@ -104,15 +116,12 @@ class CharacterModule(commands.Cog):
     async def help(self, context: commands.Context):
         prefix = await self.bot.get_custom_prefix(self.bot, context.message)
         prefix = prefix[-1]
+        await context.send(self.help_str.format(prefix=prefix))
+        await context.send(self.reaction_help_str.format(prefix=prefix))
+        await context.send(self.custom_help_str.format(prefix=prefix))
         if context.guild and context.author.guild_permissions.manage_channels:
-            await context.send(self.help_str.format(prefix=prefix))
-            await context.send(self.reaction_help_str.format(prefix=prefix))
-            await context.send(self.custom_help_str.format(prefix=prefix))
             await context.send(Whitelist.whitelist_help.format(prefix=prefix))
-        else:
-            await context.send(self.help_str.format(prefix=prefix))
-            await context.send(self.reaction_help_str.format(prefix=prefix))
-            await context.send(self.custom_help_str.format(prefix=prefix))
+        await context.send(self.config_help_str.format(prefix=prefix))
 
     async def check_character(self, context, cid, check_owner=True):
         character = self.bot.db.execute("SELECT * FROM characters WHERE id = ?", (cid,)).fetchone()
