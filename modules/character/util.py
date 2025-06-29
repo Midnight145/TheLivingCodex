@@ -14,7 +14,10 @@ class Util(commands.Cog):
         self.bot = bot
         Util.instance = self
         resp = self.bot.db.execute("PRAGMA table_info(user_config)").fetchall()
-        self.user_config_fields = [row["name"] for row in resp if row["name"] != "user_id"]
+        self.user_config_fields = [row["name"] for row in resp]
+        self.user_config_fields.remove("id")
+        self.user_config_fields.remove("guild_id")
+        self.user_config_fields.remove("user_id")
 
     async def create_webhook(self, channel):
         webhooks = await channel.webhooks()
@@ -27,13 +30,16 @@ class Util(commands.Cog):
 
         return webhook
 
-    def fetch_char_info(self, content, author) -> tuple[CharacterInfo, str]:
+    def fetch_char_info(self, content: str, gid: int, author: int) -> tuple[CharacterInfo, str]:
         prefixes = self.bot.db.execute("SELECT * FROM prefixes WHERE owner = ?", (author,)).fetchall()
-        found_prefixes = sorted([i for i in prefixes if content.startswith(i["prefix"])],
-                                key = lambda x: len(x["prefix"]), reverse=True)
+        if self.get_user_config(author, gid, "case_insensitive"):
+            print(self.get_user_config(author, gid, "case_insensitive"))
+            found_prefixes = sorted([i for i in prefixes if content.lower().startswith(i["prefix"].lower())], key = lambda x: len(x["prefix"]), reverse = True)
+        else:
+            found_prefixes = sorted([i for i in prefixes if content.startswith(i["prefix"])],
+                                key = lambda x: len(x["prefix"]), reverse = True)
         found_prefix = found_prefixes[0] if found_prefixes else None
         char = CharacterInfo.fetch_character(found_prefix["cid"]) if found_prefix else None
-
         return char, None if not found_prefix else found_prefix["prefix"]
 
     @staticmethod
@@ -121,6 +127,12 @@ class Util(commands.Cog):
             await context.send(f"Configuration option `{option}` set to `{value}`.")
         else:
             await context.send(f"Configuration option `{option}` does not exist. Valid options are: " + ", ".join(self.user_config_fields))
+
+    @commands.is_owner()
+    @commands.command()
+    async def commit(self, context: commands.Context):
+        self.bot.connection.commit()
+        await context.send("Committed.")
 
 async def setup(bot):
     await bot.add_cog(Util(bot))

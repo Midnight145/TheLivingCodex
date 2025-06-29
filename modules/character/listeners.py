@@ -21,9 +21,10 @@ class Listeners(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.guild:
-            Util.instance.create_user_config(message.author.id, message.guild.id)
+            gid = message.guild.id
         else:
-            Util.instance.create_user_config(message.author.id)
+            gid = 0
+        Util.instance.create_user_config(message.author.id, gid)
         if not message.content or message.author.id in self.edit_checks or message.guild is None or message.author.bot: return
         prefix = self.bot.db.execute("SELECT prefix FROM config WHERE server_id = ?", (message.guild.id,)).fetchone()[0]
         if message.content[0] == '[' or message.content[0] == prefix:
@@ -35,7 +36,7 @@ class Listeners(commands.Cog):
 
         char: CharacterInfo = Proxy.instance.handle_proxied_message(message)
         if char is None:
-            char, found_prefix = Util.instance.fetch_char_info(message.content, message.author.id)
+            char, found_prefix = Util.instance.fetch_char_info(message.content, gid, message.author.id)
             if char is None or found_prefix is None:
                 return
             full_message = message.content[len(found_prefix):]

@@ -22,7 +22,7 @@ class Prefix(commands.Cog):
         await context.send("Prefix added!")
 
     async def add_prefix_dynamic(self, context, cid: int = None):
-        prefix = self.__fetch_prefix(context, cid)
+        prefix = await self.__fetch_prefix(context, cid)
         self.bot.db.execute("INSERT INTO prefixes (cid, prefix, owner) VALUES (?, ?, ?)", (cid, prefix, context.author.id))
         self.bot.connection.commit()
         await context.send("Prefix added!")

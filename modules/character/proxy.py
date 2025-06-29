@@ -16,10 +16,15 @@ class Proxy(commands.Cog):
 
     @commands.command()
     async def proxy(self, context: commands.Context, prefix: int | str):
+        if context.guild:
+            gid = context.guild.id
+        else:
+            gid = 0
         if isinstance(prefix, int):
             char = self.bot.db.execute("SELECT * FROM characters WHERE id = ?", (prefix,)).fetchone()
         else:
-            char, _ = Util.instance.fetch_char_info(prefix, context.author.id)
+
+            char, _ = Util.instance.fetch_char_info(prefix, gid, context.author.id)
         if char is None:
             to_delete = await context.send("Character not found!")
             await asyncio.sleep(3)

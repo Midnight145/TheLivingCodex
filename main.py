@@ -34,7 +34,7 @@ def init_db() -> Connection:
     db.execute("CREATE TABLE IF NOT EXISTS characters (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, race TEXT, classes TEXT, image TEXT, backstory TEXT, link TEXT, owner INTEGER, type TEXT, data TEXT DEFAULT '')")
     db.execute("CREATE TABLE IF NOT EXISTS prefixes (id INTEGER PRIMARY KEY, cid INTEGER, prefix TEXT, owner INTEGER)")
     db.execute("CREATE TABLE IF NOT EXISTS proxies (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, cid INTEGER, channel INTEGER, thread INTEGER)")
-    db.execute("CREATE TABLE IF NOT EXISTS user_config (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, guild_id INTEGER NOT NULL DEFAULT 0, autoreact BOOLEAN DEFAULT FALSE)")
+    db.execute("CREATE TABLE IF NOT EXISTS user_config (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, guild_id INTEGER NOT NULL DEFAULT 0, autoreact BOOLEAN DEFAULT FALSE, case_insensitive BOOLEAN DEFAULT FALSE)")
 
     return connection
 

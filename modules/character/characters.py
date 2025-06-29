@@ -58,6 +58,7 @@ class CharacterModule(commands.Cog):
 **User Configuration:**
     `{prefix}config <option> <value>` - Configure user settings. Options include:
         `autoreact` - Enable or disable automatic reactions to proxied messages. Set to `true` or `false`.
+        `case_insensitive` - Enable or disable case insensitive proxies. Set to `true` or `false`.
 
 **Server Configuration:**
     `{prefix}prefix <new_prefix>` - Change the bot's prefix for the server. This will change the prefix for all commands.
